@@ -80,7 +80,11 @@ const defaultInputProps = {
 class TagsInput extends React.Component {
   constructor () {
     super()
-    this.state = {tag: '', isFocused: false}
+    this.state = {
+      tag: '',
+      isFocused: false,
+      keys: []
+    }
     this.focus = ::this.focus
     this.blur = ::this.blur
   }
@@ -226,6 +230,10 @@ class TagsInput extends React.Component {
     return false
   }
 
+  backwardsTab (keyCode) {
+    return this.state.keys.indexOf(16) !== -1 && keyCode === 9
+  }
+
   addTag (tag) {
     return this._addTags([tag])
   }
@@ -249,6 +257,13 @@ class TagsInput extends React.Component {
     this._addTags(tags)
   }
 
+  handleKeyUp (e) {
+    const keys = this.state.keys.filter(keyCode => keyCode === e.keyCode)
+    this.setState({
+      keys
+    })
+  }
+
   handleKeyDown (e) {
     if (e.defaultPrevented) {
       return
@@ -261,7 +276,7 @@ class TagsInput extends React.Component {
     let add = addKeys.indexOf(keyCode) !== -1
     let remove = removeKeys.indexOf(keyCode) !== -1
 
-    if (add) {
+    if (add && !this.backwardsTab(keyCode)) {
       let added = this.accept()
       // Special case for preventing forms submitting.
       if (added || keyCode === 13) {
@@ -272,6 +287,14 @@ class TagsInput extends React.Component {
     if (remove && value.length > 0 && empty) {
       e.preventDefault()
       this._removeTag(value.length - 1)
+    }
+
+    if (!remove && !add) {
+      if (this.state.keys.indexOf(keyCode) !== -1) {
+        this.setState({
+          keys: [...this.state.keys, keyCode]
+        })
+      }
     }
   }
 
@@ -377,6 +400,7 @@ class TagsInput extends React.Component {
       value: tag,
       onPaste: ::this.handlePaste,
       onKeyDown: ::this.handleKeyDown,
+      onKeyUp: ::this.handleKeyUp,
       onChange: ::this.handleChange,
       onFocus: ::this.handleOnFocus,
       onBlur: ::this.handleOnBlur,
